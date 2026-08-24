@@ -19,58 +19,114 @@ enum Role {
 }
 
 model Team {
-  id           String        @id @default(cuid())
-  name         String        @unique
-  createdAt    DateTime      @default(now())
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
 
   users        User[]
   salesRecords SalesRecord[]
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  name          String
-  role          Role     @default(VIEWER)
-  createdAt     DateTime @default(now())
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(VIEWER)
+  createdAt DateTime @default(now())
 
-  team          Team?    @relation(fields: [teamId], references: [id])
-  teamId        String?
+  team   Team?   @relation(fields: [teamId], references: [id])
+  teamId String?
 
   salesRecords  SalesRecord[] @relation("RecordedBy")
   comments      Comment[]
+  emailVerified Boolean       @default(false)
+  image         String?
+  updatedAt     DateTime      @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
 }
 
 model SalesRecord {
-  id          String   @id @default(cuid())
-  product     String
-  amount      Decimal  @db.Decimal(12, 2)
-  soldAt      DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  product   String
+  amount    Decimal  @db.Decimal(12, 2)
+  soldAt    DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  team        Team     @relation(fields: [teamId], references: [id])
-  teamId      String
+  team   Team   @relation(fields: [teamId], references: [id])
+  teamId String
 
-  recordedBy  User     @relation("RecordedBy", fields: [recordedById], references: [id])
+  recordedBy   User   @relation("RecordedBy", fields: [recordedById], references: [id])
   recordedById String
 
-  comments    Comment[]
+  comments Comment[]
 
   @@index([teamId])
   @@index([soldAt])
 }
 
 model Comment {
-  id            String   @id @default(cuid())
-  body          String
-  createdAt     DateTime @default(now())
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
 
-  author        User        @relation(fields: [authorId], references: [id])
-  authorId      String
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
 
   salesRecord   SalesRecord @relation(fields: [salesRecordId], references: [id])
   salesRecordId String
 
   @@index([salesRecordId])
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  issuer                String
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }
