@@ -3,6 +3,8 @@ import express from "express";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.js";
 import { prisma } from "./db.js";
+import { salesRecordsRouter } from "./routes/sales-records.js";
+import { errorHandler } from "./middleware/error-handler.js";
 
 const app = express();
 
@@ -14,6 +16,10 @@ app.get("/health", async (_req, res) => {
   await prisma.$queryRaw`SELECT 1`;
   res.json({ status: "ok" });
 });
+
+app.use("/api/sales-records", salesRecordsRouter);
+
+app.use(errorHandler);
 
 const port = process.env.PORT ?? 4000;
 app.listen(port, () => {
