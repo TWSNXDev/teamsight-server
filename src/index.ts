@@ -1,12 +1,21 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.js";
 import { prisma } from "./db.js";
 import { salesRecordsRouter } from "./routes/sales-records.js";
+import { teamsRouter } from "./routes/teams.js";
 import { errorHandler } from "./middleware/error-handler.js";
 
 const app = express();
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
+);
 
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
@@ -18,6 +27,7 @@ app.get("/health", async (_req, res) => {
 });
 
 app.use("/api/sales-records", salesRecordsRouter);
+app.use("/api/teams", teamsRouter);
 
 app.use(errorHandler);
 
