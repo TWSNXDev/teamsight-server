@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../middleware/require-auth.js";
+import { io } from "../socket.js";
 
 export const salesRecordsRouter = Router();
 
@@ -38,6 +39,7 @@ salesRecordsRouter.post("/", async (req, res) => {
     include,
   });
 
+  io.emit("sales-record:created", record);
   res.status(201).json(record);
 });
 
@@ -54,10 +56,12 @@ salesRecordsRouter.patch("/:id", async (req, res) => {
     include,
   });
 
+  io.emit("sales-record:updated", record);
   res.json(record);
 });
 
 salesRecordsRouter.delete("/:id", async (req, res) => {
   await prisma.salesRecord.delete({ where: { id: req.params.id } });
+  io.emit("sales-record:deleted", { id: req.params.id });
   res.status(204).send();
 });
