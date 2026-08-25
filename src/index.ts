@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { createServer } from "node:http";
 import express from "express";
 import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
@@ -7,8 +8,11 @@ import { prisma } from "./db.js";
 import { salesRecordsRouter } from "./routes/sales-records.js";
 import { teamsRouter } from "./routes/teams.js";
 import { errorHandler } from "./middleware/error-handler.js";
+import { initSocket } from "./socket.js";
 
 const app = express();
+const httpServer = createServer(app);
+initSocket(httpServer);
 
 app.use(
   cors({
@@ -32,6 +36,6 @@ app.use("/api/teams", teamsRouter);
 app.use(errorHandler);
 
 const port = process.env.PORT ?? 4000;
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log(`teamsight-server listening on port ${port}`);
 });
