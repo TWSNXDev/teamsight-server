@@ -6,13 +6,18 @@ export const salesRecordsRouter = Router();
 
 salesRecordsRouter.use(requireAuth);
 
+const include = {
+  team: true,
+  recordedBy: { select: { id: true, name: true } },
+} as const;
+
 salesRecordsRouter.get("/", async (req, res) => {
   const { teamId } = req.query;
 
   const records = await prisma.salesRecord.findMany({
     where: teamId ? { teamId: String(teamId) } : undefined,
     orderBy: { soldAt: "desc" },
-    include: { team: true, recordedBy: { select: { id: true, name: true } } },
+    include,
   });
 
   res.json(records);
@@ -30,6 +35,7 @@ salesRecordsRouter.post("/", async (req, res) => {
       teamId,
       recordedById: userId,
     },
+    include,
   });
 
   res.status(201).json(record);
@@ -45,6 +51,7 @@ salesRecordsRouter.patch("/:id", async (req, res) => {
       ...(amount !== undefined && { amount }),
       ...(soldAt !== undefined && { soldAt: new Date(soldAt) }),
     },
+    include,
   });
 
   res.json(record);
