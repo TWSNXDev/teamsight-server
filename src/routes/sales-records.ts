@@ -1,7 +1,13 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../middleware/require-auth.js";
+import { requireRole } from "../middleware/require-role.js";
 import { io } from "../socket.js";
+
+function canAccessTeam(user: AuthedRequest["user"], teamId: string) {
+  if (user.role === "ADMIN") return true;
+  return user.teamId === teamId;
+}
 
 export const salesRecordsRouter = Router();
 
@@ -24,9 +30,14 @@ salesRecordsRouter.get("/", async (req, res) => {
   res.json(records);
 });
 
-salesRecordsRouter.post("/", async (req, res) => {
+salesRecordsRouter.post("/", requireRole("ADMIN", "MANAGER"), async (req, res) => {
   const { product, amount, soldAt, teamId } = req.body;
-  const userId = (req as AuthedRequest).user.id;
+  const user = (req as AuthedRequest).user;
+
+  if (!canAccessTeam(user, teamId)) {
+    res.status(403).json({ message: "Cannot create records for another team" });
+    return;
+  }
 
   const record = await prisma.salesRecord.create({
     data: {
@@ -34,7 +45,7 @@ salesRecordsRouter.post("/", async (req, res) => {
       amount,
       soldAt: new Date(soldAt),
       teamId,
-      recordedById: userId,
+      recordedById: user.id,
     },
     include,
   });
@@ -43,11 +54,22 @@ salesRecordsRouter.post("/", async (req, res) => {
   res.status(201).json(record);
 });
 
-salesRecordsRouter.patch("/:id", async (req, res) => {
+salesRecordsRouter.patch("/:id", requireRole("ADMIN", "MANAGER"), async (req, res) => {
   const { product, amount, soldAt } = req.body;
+  const user = (req as AuthedRequest).user;
+  const id = String(req.params.id);
+
+  const existing = await prisma.salesRecord.findUniqueOrThrow({
+    where: { id },
+  });
+
+  if (!canAccessTeam(user, existing.teamId)) {
+    res.status(403).json({ message: "Cannot edit records for another team" });
+    return;
+  }
 
   const record = await prisma.salesRecord.update({
-    where: { id: req.params.id },
+    where: { id },
     data: {
       ...(product !== undefined && { product }),
       ...(amount !== undefined && { amount }),
@@ -60,8 +82,20 @@ salesRecordsRouter.patch("/:id", async (req, res) => {
   res.json(record);
 });
 
-salesRecordsRouter.delete("/:id", async (req, res) => {
-  await prisma.salesRecord.delete({ where: { id: req.params.id } });
-  io.emit("sales-record:deleted", { id: req.params.id });
+salesRecordsRouter.delete("/:id", requireRole("ADMIN", "MANAGER"), async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const id = String(req.params.id);
+
+  const existing = await prisma.salesRecord.findUniqueOrThrow({
+    where: { id },
+  });
+
+  if (!canAccessTeam(user, existing.teamId)) {
+    res.status(403).json({ message: "Cannot delete records for another team" });
+    return;
+  }
+
+  await prisma.salesRecord.delete({ where: { id } });
+  io.emit("sales-record:deleted", { id });
   res.status(204).send();
 });
