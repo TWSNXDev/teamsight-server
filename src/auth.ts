@@ -10,4 +10,18 @@ export const auth = betterAuth({
     enabled: true,
   },
   trustedOrigins: [process.env.FRONTEND_URL!],
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        defaultValue: "VIEWER",
+        input: false,
+      },
+      teamId: {
+        type: "string",
+        required: false,
+        input: false,
+      },
+    },
+  },
 });
