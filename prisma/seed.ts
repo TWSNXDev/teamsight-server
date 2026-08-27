@@ -9,6 +9,13 @@ async function main() {
   });
 
   console.log("Created team:", team);
+
+  const admin = await prisma.user.update({
+    where: { email: "test2@example.com" },
+    data: { role: "ADMIN", teamId: team.id },
+  });
+
+  console.log("Promoted to admin:", admin.email);
 }
 
 main().finally(() => prisma.$disconnect());
