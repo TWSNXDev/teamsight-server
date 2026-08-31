@@ -1,7 +1,24 @@
 import type { Server as HttpServer } from "node:http";
-import { Server } from "socket.io";
+import { Server, type Socket } from "socket.io";
+import { fromNodeHeaders } from "better-auth/node";
+import { auth } from "./auth.js";
 
 export let io: Server;
+
+interface OnlineUser {
+  id: string;
+  name: string;
+}
+
+const onlineUsers = new Map<string, OnlineUser>();
+
+function broadcastOnlineUsers() {
+  const uniqueUsers = new Map<string, OnlineUser>();
+  for (const user of onlineUsers.values()) {
+    uniqueUsers.set(user.id, user);
+  }
+  io.emit("online-users", Array.from(uniqueUsers.values()));
+}
 
 export function initSocket(httpServer: HttpServer) {
   io = new Server(httpServer, {
@@ -11,11 +28,27 @@ export function initSocket(httpServer: HttpServer) {
     },
   });
 
+  io.use(async (socket: Socket, next) => {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(socket.handshake.headers),
+    });
+
+    if (!session) {
+      next(new Error("Unauthorized"));
+      return;
+    }
+
+    socket.data.user = { id: session.user.id, name: session.user.name };
+    next();
+  });
+
   io.on("connection", (socket) => {
-    console.log("socket connected:", socket.id);
+    onlineUsers.set(socket.id, socket.data.user);
+    broadcastOnlineUsers();
 
     socket.on("disconnect", () => {
-      console.log("socket disconnected:", socket.id);
+      onlineUsers.delete(socket.id);
+      broadcastOnlineUsers();
     });
   });
 
