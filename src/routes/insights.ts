@@ -11,11 +11,10 @@ insightsRouter.post("/", async (_req, res) => {
   const summary = await buildSalesSummary();
   const facts = buildFactsBlock(summary);
 
-  const prompt = `You are a sales analyst writing a short briefing for a busy manager, in fluent, natural Thai (not a literal translation, not a list of numbers restated one by one).
+  const prompt = `You are a sales analyst writing a short briefing for a busy manager, in fluent, natural English.
 
 Write 2-4 flowing sentences that explain what happened and why it matters. Use the numbers as supporting evidence woven into the sentences, not as a checklist.
 Only use the facts given below — never invent, estimate, or assume numbers that are not listed here. If something can't be concluded from this data, say so plainly.
-When writing currency amounts in Thai, use "บาท" only — never "บาทไทย" or "THB".
 
 ${facts}`;
 

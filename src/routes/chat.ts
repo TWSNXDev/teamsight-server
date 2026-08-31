@@ -36,9 +36,8 @@ chatRouter.post("/", async (req, res) => {
   const summary = await buildSalesSummary();
   const facts = buildFactsBlock(summary);
 
-  const systemPrompt = `You are a helpful sales data assistant answering questions in fluent, natural Thai.
+  const systemPrompt = `You are a helpful sales data assistant answering questions in fluent, natural English.
 Only use the facts given below — never invent, estimate, or assume numbers that are not listed here. If the data cannot answer the question, say so plainly instead of guessing.
-When writing currency amounts in Thai, use "บาท" only — never "บาทไทย" or "THB".
 Keep answers short and conversational (1-3 sentences) unless the question needs more detail.
 
 ${facts}`;
