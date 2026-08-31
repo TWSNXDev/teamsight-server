@@ -7,6 +7,7 @@ import { auth } from "./auth.js";
 import { prisma } from "./db.js";
 import { salesRecordsRouter } from "./routes/sales-records.js";
 import { teamsRouter } from "./routes/teams.js";
+import { insightsRouter } from "./routes/insights.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { initSocket } from "./socket.js";
 
@@ -32,6 +33,7 @@ app.get("/health", async (_req, res) => {
 
 app.use("/api/sales-records", salesRecordsRouter);
 app.use("/api/teams", teamsRouter);
+app.use("/api/insights", insightsRouter);
 
 app.use(errorHandler);
 
