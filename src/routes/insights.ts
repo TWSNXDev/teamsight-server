@@ -74,10 +74,21 @@ insightsRouter.post("/", async (_req, res) => {
   const summary = await buildSalesSummary();
   const prompt = buildPrompt(summary);
 
-  const completion = await openrouter.chat.completions.create({
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache");
+
+  const stream = await openrouter.chat.completions.create({
     model: AI_MODEL,
     messages: [{ role: "user", content: prompt }],
+    stream: true,
   });
 
-  res.json({ insight: completion.choices[0]?.message?.content ?? "" });
+  for await (const chunk of stream) {
+    const text = chunk.choices[0]?.delta?.content;
+    if (text) {
+      res.write(text);
+    }
+  }
+
+  res.end();
 });
