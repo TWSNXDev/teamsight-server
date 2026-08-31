@@ -2,15 +2,11 @@ import "dotenv/config";
 import { prisma } from "../src/db.js";
 
 async function main() {
-  const existing = await prisma.team.findUnique({ where: { name: "ภาคเหนือ" } });
-
-  const team = existing
-    ? await prisma.team.update({ where: { id: existing.id }, data: { name: "North Region" } })
-    : await prisma.team.upsert({
-        where: { name: "North Region" },
-        update: {},
-        create: { name: "North Region" },
-      });
+  const team = await prisma.team.upsert({
+    where: { name: "North Region" },
+    update: {},
+    create: { name: "North Region" },
+  });
 
   console.log("Created team:", team);
 
