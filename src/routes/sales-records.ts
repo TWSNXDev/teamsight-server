@@ -55,7 +55,7 @@ salesRecordsRouter.post("/", requireRole("ADMIN", "MANAGER"), async (req, res) =
 });
 
 salesRecordsRouter.patch("/:id", requireRole("ADMIN", "MANAGER"), async (req, res) => {
-  const { product, amount, soldAt } = req.body;
+  const { product, amount, soldAt, expectedUpdatedAt } = req.body;
   const user = (req as AuthedRequest).user;
   const id = String(req.params.id);
 
@@ -65,6 +65,17 @@ salesRecordsRouter.patch("/:id", requireRole("ADMIN", "MANAGER"), async (req, re
 
   if (!canAccessTeam(user, existing.teamId)) {
     res.status(403).json({ message: "Cannot edit records for another team" });
+    return;
+  }
+
+  if (
+    expectedUpdatedAt &&
+    new Date(expectedUpdatedAt).getTime() !== existing.updatedAt.getTime()
+  ) {
+    res.status(409).json({
+      message: "This record was changed by someone else. Please refresh and try again.",
+      current: existing,
+    });
     return;
   }
 
