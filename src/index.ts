@@ -10,9 +10,11 @@ import { teamsRouter } from "./routes/teams.js";
 import { insightsRouter } from "./routes/insights.js";
 import { chatRouter } from "./routes/chat.js";
 import { errorHandler } from "./middleware/error-handler.js";
+import { authLimiter, aiLimiter } from "./middleware/rate-limit.js";
 import { initSocket } from "./socket.js";
 
 const app = express();
+app.set("trust proxy", 1);
 const httpServer = createServer(app);
 initSocket(httpServer);
 
@@ -23,7 +25,7 @@ app.use(
   }),
 );
 
-app.all("/api/auth/*splat", toNodeHandler(auth));
+app.all("/api/auth/*splat", authLimiter, toNodeHandler(auth));
 
 app.use(express.json());
 
@@ -34,8 +36,8 @@ app.get("/health", async (_req, res) => {
 
 app.use("/api/sales-records", salesRecordsRouter);
 app.use("/api/teams", teamsRouter);
-app.use("/api/insights", insightsRouter);
-app.use("/api/chat", chatRouter);
+app.use("/api/insights", aiLimiter, insightsRouter);
+app.use("/api/chat", aiLimiter, chatRouter);
 
 app.use(errorHandler);
 
