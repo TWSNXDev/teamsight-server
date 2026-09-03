@@ -12,6 +12,8 @@ interface ChatMessage {
   content: string;
 }
 
+const MAX_MESSAGE_LENGTH = 2000;
+
 function isValidHistory(value: unknown): value is ChatMessage[] {
   return (
     Array.isArray(value) &&
@@ -20,7 +22,8 @@ function isValidHistory(value: unknown): value is ChatMessage[] {
       (m) =>
         m &&
         (m.role === "user" || m.role === "assistant") &&
-        typeof m.content === "string",
+        typeof m.content === "string" &&
+        m.content.length <= MAX_MESSAGE_LENGTH,
     )
   );
 }
