@@ -15,6 +15,7 @@ insightsRouter.post("/", async (_req, res) => {
 
 Write 2-4 flowing sentences that explain what happened and why it matters. Use the numbers as supporting evidence woven into the sentences, not as a checklist.
 Only use the facts given below — never invent, estimate, or assume numbers that are not listed here. If something can't be concluded from this data, say so plainly.
+Reply with the briefing text only — no preamble, no meta-commentary like "here's a summary", no headers.
 
 ${facts}`;
 
